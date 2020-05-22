@@ -1,47 +1,102 @@
 const express = require('express');
+const db = require('./userDb');
+const db2 = require('../posts/postDb');
 
 const router = express.Router();
 
-router.post('/', (req, res) => {
-  // do your magic!
+router.post('/', validateUser, async (req, res) => {
+  try {
+    const user = await db.insert(req.body);
+    res.status(201).json(user);
+  } catch(err) {
+    res.status(500).json({ error: "Problem posting user to the database" });
+  }
 });
 
-router.post('/:id/posts', (req, res) => {
-  // do your magic!
+router.post('/:id/posts', validateUserId, validatePost, async (req, res) => {
+  try {
+    const post = await db2.insert({...req.body, user_id: req.user });
+    res.status(201).json(post);
+  } catch(err) {
+    res.status(500).json({ error: "Problem inserting post to the database" });
+  }
 });
 
-router.get('/', (req, res) => {
-  // do your magic!
+router.get('/', async (req, res) => {
+  try {
+    const users = await db.get();
+    res.status(200).json(users);
+  } catch(err) {
+    res.status(500).json({ error: "Problem getting users from the database"});
+  }
+  
 });
 
-router.get('/:id', (req, res) => {
-  // do your magic!
+router.get('/:id', validateUserId, async (req, res) => {
+  try {
+    const user = await db.getById(req.user);
+    res.status(200).json(user);
+  } catch(err) {
+    res.status(500).json({ error: "Problem getting user from the database" });
+  }
 });
 
-router.get('/:id/posts', (req, res) => {
-  // do your magic!
+router.get('/:id/posts', validateUserId, async (req, res) => {
+  try {
+    const posts = await db.getUserPosts(req.user);
+    res.status(200).json(posts);
+  } catch(err) {
+    res.status(500).json({ error: "Problem getting posts from the database" });
+  }
 });
 
-router.delete('/:id', (req, res) => {
-  // do your magic!
+router.delete('/:id', validateUserId, async (req, res) => {
+  try {
+    const deleted = await db.remove(req.user);
+    res.status(200).json(deleted);
+  } catch(err) {
+    res.status(500).json({ error: "Problem removing user from the database" });
+  }
 });
 
-router.put('/:id', (req, res) => {
-  // do your magic!
+router.put('/:id', validateUser, validateUserId, async (req, res) => {
+  try {
+    const user = await db.update(req.user, req.body);
+    res.status(202).json(user);
+  } catch(err) {
+    res.status(500).json({ error: "Problem updating user from the database" });
+  }
 });
 
 //custom middleware
 
-function validateUserId(req, res, next) {
-  // do your magic!
+async function validateUserId(req, res, next) {
+  const user = await db.getById(req.params.id);
+  if(!user) {
+    return res.status(404).json({ message: "invalid user id" });
+  }
+  req.user = req.params.id;
+  next();
 }
 
 function validateUser(req, res, next) {
-  // do your magic!
+  if(!Object.keys(req.body).length) {
+    return res.status(400).json({ message: "missing user data" });
+  }
+  if(!req.body.name) {
+    return res.status(400).json({ message: "missing required name field" });
+  }
+  next();
 }
 
 function validatePost(req, res, next) {
-  // do your magic!
+  if (!Object.keys(req.body).length) {
+    return res.status(400).json({ message: "missing post data" });
+  }
+  if (!req.body.text) {
+    return res.status(400).json({ message: "missing required text field" });
+  }
+  next();
 }
 
 module.exports = router;
