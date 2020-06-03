@@ -32,7 +32,7 @@ router.delete('/:id', validatePostId, async (req, res) => {
 router.put('/:id', validatePostId, validatePost, async (req, res) => {
   try {
     const post = await db.update(req.post, req.body);
-    res.status(202).json(post);
+    res.status(200).json(post);
   } catch (err) {
     res.status(500).json({ error: "Problem changing post in the database" });
   }

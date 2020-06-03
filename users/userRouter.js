@@ -62,7 +62,7 @@ router.delete('/:id', validateUserId, async (req, res) => {
 router.put('/:id', validateUser, validateUserId, async (req, res) => {
   try {
     const user = await db.update(req.user, req.body);
-    res.status(202).json(user);
+    res.status(200).json(user);
   } catch(err) {
     res.status(500).json({ error: "Problem updating user from the database" });
   }
